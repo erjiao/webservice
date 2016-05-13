@@ -9,7 +9,6 @@ import javax.jws.soap.SOAPBinding.Use;
 
 import org.apache.cxf.interceptor.InInterceptors;
 import org.apache.cxf.interceptor.OutInterceptors;
-import org.eclipse.jetty.security.UserDataConstraint;
 
 /**
  * 创建SEI(服务的终端接口) 
