@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<mappings>
-	<mapping name="_person">
-		<property name="id" mappedName="_id_" />
-		<property name="name" mappedName="_name_" />
-		<property name="password" ignoreProperty="true" />
-	</mapping>
-</mappings>
