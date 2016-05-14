@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http-conf="http://cxf.apache.org/transports/http/configuration"
+	xmlns:jaxws="http://cxf.apache.org/jaxws"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+               http://www.springframework.org/schema/beans/spring-beans.xsd 
+               http://cxf.apache.org/transports/http/configuration 
+               http://cxf.apache.org/schemas/configuration/http-conf.xsd 
+               http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
+	<http-conf:conduit name="*.http-conduit">
+		<!-- 配置http 接收压缩的数据, 然后进行解压处理 -->
+		<http-conf:client AcceptEncoding="gzip" />
+	</http-conf:conduit>
+	<jaxws:client id="orderServiceClient" serviceClass="com.erjiao.cxf.feature.OrderService"
+		address="http://localhost:8080/feature/OrderServcie">
+		<jaxws:features>
+			<bean class="org.apache.cxf.transport.common.gzip.GZIPFeature">
+				<property name="threshold" value="1" />
+			</bean>
+		</jaxws:features>
+	</jaxws:client>
+</beans>

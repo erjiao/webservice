@@ -2,6 +2,7 @@ package com.erjiao.cxf.transport.http.soap1_2;
 
 import javax.xml.ws.Endpoint;
 
+
 /**
  * 
  */

@@ -1,0 +1,628 @@
+web service: web 服务, 消息格式
+跨语言, 跨平台分布式系统间整合解决方案.
+
+b/s: browser/server, 业务在服务端执行
+c/s: client/server,  业务在客户端执行. oop, 部署升级困难
+
+远程调用(进程间通信): 业务在服务端执行, socket
+
+soap: simple object access protocal, 
+http + xml = soap
+
+ESB: enterprise service bus, 企业服务总线
+
+smtp:
+
+ftp:
+
+jvm:
+
+soa: service oriented architecture, 面向服务的架构
+
+wsdl: web service description language, xml
+    address: url
+    port: class
+    操作: 方法
+    输入: 参数
+    输出: 返回值
+    
+体验jdk1.6 开发webservice
+    1. 创建java项目
+    2. 编写服务类
+    	@WebService
+			public class WelcomeService {
+				
+				@WebMethod
+				public String sayHello(String name) {
+					System.out.println(name);
+					return "hello " + name;
+				}
+				
+				public static void main(String[] args) {
+					//终端
+					WelcomeService ws = new WelcomeService();
+					String url = "http://localhost:9090/WelcomeService";
+					Endpoint.publish(url, ws); 
+				}
+			}
+			
+			3. 发布ws
+			  WelcomeService ws = new WelcomeService();
+				String url = "http://localhost:9090/WelcomeService";
+				Endpoint.publish(url, ws); 
+				
+			4. 运行 main
+			
+			5. 查看wsdl文档
+			   ie: http://localhost:9090/WelcomeService?wsdl
+
+使用ide 自带的 tcp/ip 监控器观察消息格式
+    1. 在window --> 首选项 -->run/debug --> tcp/ip 监控器
+    2. 新建监听端口和本地端口
+       使用9000 监听 localhost:9090 端口, 并启动
+    3. 将 ?wsdl 文档另存为磁盘文件, 并修改终端的端口 --> 9000
+    4. 在ws浏览器中打开wsdl文件时, 通过file:f/ws/wslcomeService.wsdl 文件方式指定wsdl文件地址(file: 指定本地磁盘访问协议)
+    5. 在下方出现 9000 端口号
+    6. 在ws浏览器中输入参数 go
+    7. 在tcp/ip 视图看到拦截到的信息
+	      <S:envelope>
+	      	<S:body>
+	      		...
+	      	</S:body>
+	      </S:envelope>
+    8. 格式是否正确
+
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+		xmlns:q0="http://service.jdk6ws.erjiao.com/" 
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<soapenv:Body>
+		<q0:sayHello>
+		  <arg0>erjiao</arg0> 
+		</q0:sayHello>
+	</soapenv:Body>
+</soapenv:Envelope>
+
+<S:Envelope xmlns:S="http://schemas.xmlsoap.org/soap/envelope/">
+	<S:Body>
+		<ns2:sayHelloResponse xmlns:ns2="http://service.jdk6ws.erjiao.com/">
+			<return>hello erjiao</return> 
+		</ns2:sayHelloResponse>
+	</S:Body>
+</S:Envelope>
+
+
+中间件:ejb|jms 
+中间件服务器: weblogic jboss websphere 包括(EJB容器和web容器)
+              tomcat 只是一个web容器(servlet + jsp)
+              
+
+xml,http, soap
+soa
+esb
+wsdl
+porttype
+operation
+input message
+output message
+
+spring: 容器. 
+	1. 实例化bean
+	2. 组装对象
+	
+hibernate:
+  ORM: 对象关系映射
+	
+	
+使用cxf开发webservice,  OXM: 对象XML映射
+  1. 创建WEB项目
+  2. 引入类库
+  3. 创建SEI(service endpoint interface 服务终端接口)
+  	@WebService
+		public interface HelloWorld {
+			
+			@WebMethod
+			public String sayHello(String name);
+			
+		}
+	
+	4. 创建服务实现类
+		@WebService
+		public class HelloWorldServiceImpl implements HelloWorldService{
+		
+			@Override
+			public String sayHello(String name) {
+				return null;
+			}
+		
+		}
+		
+	5. 创建	bean 的配置文件
+	  <?xml version="1.0" encoding="UTF-8"?>
+		<beans xmlns="http://www.springframework.org/schema/beans"
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+			xmlns:jaxws="http://cxf.apache.org/jaxws"
+			xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd 
+				http://cxf.apache.org/jaxws http://cxf.apache.org/jaxws">
+			
+			   <!-- 引cxf的一些核心配置 -->
+			   <import resource="classpath:META-INF/cxf/cxf.xml" /> 
+			   <import resource="classpath:META-INF/cxf/cxf-extension-soap.xml" />
+			   <import resource="classpath:META-INF/cxf/cxf-servlet.xml" /> 
+			   
+			   <!-- jaxws 终端 implementor 指定服务的实现类-->
+			   <jaxws:endpoint id="helloWorldService" implementor="com.erjiao.cxf.HelloWorldServiceImpl"
+			   	  address="/HelloWorldService">
+			   	  
+			   	  <jaxws:inInterceptors>
+			   	  	 <bean class="com.erjiao.ws.interceptor.CheckUserInterceptor"></bean>
+			   	  </jaxws:inInterceptors>
+			   </jaxws:endpoint>
+			   
+		</beans>
+
+  6. 配置web.xml 文件的spring监听器和cxf引擎的servlet
+    <?xml version="1.0" encoding="UTF-8"?>
+		<web-app version="3.0" 
+			xmlns="http://java.sun.com/xml/ns/javaee" 
+			xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+			xsi:schemaLocation="http://java.sun.com/xml/ns/javaee 
+			http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+		  <display-name></display-name>	
+		  <welcome-file-list>
+		    <welcome-file>index.jsp</welcome-file>
+		  </welcome-file-list>
+		  
+		  <!-- 通过上下文参数指定spring配置文件的位置 -->
+		  <context-param>
+		      <param-name>contextConfigLocation</param-name>
+		      <param-value>classpath:beans.xml</param-value>
+		   </context-param>
+		   
+		   <!-- 配置spring 上下文载入监听器, 确保web服务器启动时, 同时完成spring容器的初始化 -->
+		   <listener>
+		      <listener-class>
+		         org.springframework.web.context.ContextLoaderListener
+		      </listener-class>
+		   </listener>
+		   
+		   <!-- 配置cxf引擎的servlet  -->
+		   <servlet>
+		      <servlet-name>CXFServlet</servlet-name>
+		      <servlet-class>
+		         org.apache.cxf.transport.servlet.CXFServlet
+		      </servlet-class>
+		      <load-on-startup>1</load-on-startup>
+		   </servlet>
+		   <servlet-mapping>
+		      <servlet-name>CXFServlet</servlet-name>
+		      <url-pattern>/*</url-pattern>
+		   </servlet-mapping>
+		</web-app>
+		
+  7. 部署程序到tomcat中
+  
+创建客户端程序
+	1. 创建cxf 的客户端程序(java 程序)
+  2. 引入类库
+  3. 配置client.xml
+     <?xml version="1.0" encoding="UTF-8"?>
+		 <beans
+				xmlns="http://www.springframework.org/schema/beans"
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+				xmlns:jaxws="http://cxf.apache.org/jaxws"
+				xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd 
+				http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
+				
+				<!-- serviceClass 指定服务所实现的接口 -->
+				<jaxws:client id="helloWorldServiceClient" 
+					serviceClass="com.erjiao.cxf.HelloWorldService"
+					address="http://localhost:8000/160510cxf/HelloWorldService">
+				</jaxws:client>
+		 </beans>
+	4. 将服务端的项目(只能包含源代码)build path 到当前客户端
+	5. 访问ws
+	   public class App {
+					public static void main(String[] args) {
+						//创建spring 容器
+						ApplicationContext ac = new ClassPathXmlApplicationContext("client.xml");
+						HelloWorldService hws = (HelloWorldService) ac.getBean("helloWorldServiceClient");
+						System.out.println(hws.sayHello("erjiao"));
+					}
+		 }
+	6. 消息
+	
+	发送消息:
+	<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+		<soap:Body>
+			<ns2:sayHello xmlns:ns2="http://cxf.erjiao.com/">
+				<arg0>erjiao</arg0>
+			</ns2:sayHello>
+		</soap:Body>
+  </soap:Envelope>
+  
+  返回消息:
+  <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+		<soap:Body>
+			<ns2:sayHelloResponse xmlns:ns2="http://cxf.erjiao.com/">
+				<return>hello erjiao</return>
+			</ns2:sayHelloResponse>
+		</soap:Body>
+  </soap:Envelope>
+  
+jax-ws: java api xml for web service.(@WebService + @WebMethod), 规范
+    Endpoint.publish(url, impl);
+    
+jaxb: java api xml binding. java 对象中的属性和xml 元素名称之间的一种映射.
+cxf 架构:
+  1. bus
+  2. Front-end 前端, 以编程方法来发布webservice
+  3. 数据绑定: 进行java 对象属性和xml属性之间的一种映射.控制传递的元素名称.
+            默认是jaxb绑定
+            aegis绑定
+  
+注册xsd文件.
+  1. 从jar包中抽出xsd文件
+  2. ide -> 首选项 -> xml -> xml catelog -> add
+       location: D:\eclipse\dtd\spring-beans-3.0.xsd
+       Key type: Schema Location
+       key: http://www.springframework.org/schema/tool/spring-tool-3.0.xsd
+        [注意]
+        spring-beans-3.0.6.RELEASE.jar\META-INFO\spring.schemas 找到对应的key(对应 schemaLocation 的值)
+        spring-beans-3.0.6.RELEASE.jar\META-INFO\spring.handlers 对应xmlns 的值(名字空间)
+   
+   
+1. 先签合同(wsdl), 后干活, contract first
+2. 先干活, 后签合同, code first, 自下而上
+        
+使用cxf前端开发ws(两套API)：
+   1.jax-ws 前端:
+     a. code first: 先干活, 后签合同(wsdl), 自下而上.
+      		Creating Service Endpoint Interface (SEI)
+      		Adding Java annotation
+      		Publishing the service
+      		Developing a consumer
+      		Running the Code-first example
+      		
+      		@WebService属性
+      		-------------------------------------------
+      		 属性             |      映射元素
+      		-------------------------------------------
+      		 name                    <wsdl:portType name="">
+      		 targetNameSpace         namespace
+      		 servicename             <wsdl:service name="">
+      		 portname                <wsdl:port name="">
+      		 
+      		 @SOAPBinding
+	      	 -------------------------------------------
+	      		 属性             |      映射元素
+	      	 -------------------------------------------
+	      	  Style                 Style.DOCUMENT(文档结构性良好, 有schema 校验) 和 Style.RPC(不校验schema)
+	      	  Use                   决定序列化期间消息如何格式化 Use.LITERAL 和 Use.ENCODE
+	      	  parameterStyle        决定参数是否被包裹. ParameterStyle.BARE 和 ParameterStyle.WRAPPED
+	      	  
+	      	  @WebMethod
+	      	  -------------------------------------------
+	      		 属性             |      映射元素
+	      	  -------------------------------------------
+	      	  Name                   <wsdl:operation name=""> 映射到操作名称
+	      	  Action                 <soap:operation>
+	      	  Exclude                不包含该方法
+      		 
+      		  开发消息的消费者(客户端)
+      		 			//wsdl地址
+								String wsdlurl = "http://localhost:9090/OrderService?wsdl";
+								//名字空间
+								String namespace = "urn:codefirst:jaxws:erjiao.cn";
+								//服务名的限定对象
+								QName serviceName = new QName(namespace, "orderservice_servicename");
+								//端口的限定名
+								QName portName = new QName(namespace, "orderservice_portname");
+								//wsdl文档地址
+								URL url = new URL(wsdlurl);
+								//创建服务对象
+								Service service = Service.create(url, serviceName);
+								//通过服务对象创建端口对象
+								OrderService os = service.getPort(portName, OrderService.class);
+								//调用业务方法
+								Order o = os.getOrder("N008");
+     b. contract first: 先签合同(wsdl), 后干活, 自上而下.
+          1. 定义wsdl文档
+          2. 通过命令生成各种服务组件
+             org.apache.cxf.tools.wsdlto.WSDLToJava
+             		-p com.erjiao.cxf.frontend.jaxwsfrontend.contractfirst  //指定包结构
+								-d src //指定输出目录
+								-impl  //生成实现类
+								-server //生成服务器类
+								src/com/erjiao/cxf/frontend/jaxwsfrontend/contractfirst/demo.wsdl //指定wsdl文档地址
+          3. 对服务进行实现
+              OrderProcessImpl(
+              	...
+              )
+          4. 运行
+      
+   2.simple 前端:
+			1. Creating service implementation class and interface
+			2. Creating server implementation
+			3. Creating client proxy component to invoke our web service
+   
+RPC: remote procedure call.
+
+QName: quarlified name 限定名(名字空间 + localname)
+
+apache:
+   ws:axis + xfire
+      axis2 + cxf(xfire + celtix)
+   jdk6.0: 稳定性差
+   
+Context:
+    pageContext
+    ServletContext
+    ActionContext
+    ServletActionContext: 上下文, 当前环境
+    WebServiceContext: ws 上下文, 封装的是ws当前环境信息
+
+@Resource: 注入
+   Spring: 1. ioc(DI)  2. aop
+   
+
+分布式: 由分布在不同主机上的程序(跨进程)协同在一起构成整个应用.
+
+传输协议:
+    1. HTTP
+    		 soap1.1
+    		 soap1.2
+    2. HTTPs
+    3. JMS
+    4. Local
+    
+soap1.1消息
+------------------------------------------------
+POST /OrderService HTTP/1.1
+Host: localhost:9090
+Content-Type: text/xml; charset=utf-8
+Content-Length: 315
+Accept: application/soap+xml, application/dime, multipart/related, text/*
+User-Agent: IBM Web Services Explorer
+Cache-Control: no-cache
+Pragma: no-cache
+SOAPAction: ""
+Connection: close
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" 
+		xmlns:q0="urn:codefirst:jaxws:erjiao.cn" 
+		xmlns:xsd="http://www.w3.org/2001/XMLSchema" 
+		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <soapenv:Body>
+    <q0:getOrder>123456</q0:getOrder>
+  </soapenv:Body>
+</soapenv:Envelope>
+
+soap1.2消息
+-------------------------------------------------------------
+POST /OrderService HTTP/1.1
+Content-Type: application/soap+xml; charset=UTF-8
+Accept: */*
+User-Agent: Apache CXF 2.5.9
+Cache-Control: no-cache
+Pragma: no-cache
+Host: localhost:8888
+Connection: keep-alive
+Content-Length: 198
+
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+<soap:Body>
+<ns2:getOrder xmlns:ns2="http://soap1_2.http.transport.cxf.erjiao.com/">N008</ns2:getOrder>
+</soap:Body>
+</soap:Envelope>
+
+使用jms传输:  jee: java messaging service
+    1. 创建SEI和实现类
+		2. 创建中间件代理(消息中间件)
+			/**
+			 * 消息中间件(代理) 
+			 */
+			public class MessageBorker {
+			
+				public static void main(String[] args) {
+					try {
+						//创建消息中间件
+						BrokerService broker = new BrokerService();
+						//设置持久化适配器(内存持久化适配)
+						broker.setPersistenceAdapter(new MemoryPersistenceAdapter());
+						//设置消息中间件的连接器
+						broker.addConnector("tcp://localhost:61616");
+						//启动中间件
+						broker.start();
+						System.out.println("JMS broker ready ...");
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		3. 创建服务器和客户端配置文件
+			server-beans.xml
+			---------------------------------------------------
+			<?xml version="1.0" encoding="UTF-8"?>
+				<beans xmlns="http://www.springframework.org/schema/beans"
+					xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+					xmlns:jaxws="http://cxf.apache.org/jaxws"
+					xmlns:jms="http://cxf.apache.org/transports/jms" 
+					xmlns:p="http://www.springframework.org/schema/p" 
+					xsi:schemaLocation=" http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd 
+				                  http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd ">
+				                  
+					<import resource="classpath:META-INF/cxf/cxf.xml" />
+					<import resource="classpath:META-INF/cxf/cxf-extension-soap.xml" />
+					<import resource="classpath:META-INF/cxf/cxf-servlet.xml" />
+					<import resource="classpath:META-INF/cxf/cxf-extension-jms.xml" />
+					<!-- 终端 -->
+					<jaxws:endpoint id="orderService" implementor="com.erjiao.cxf.transport.jms.OrderServiceImpl"
+						address="jms://">
+						<jaxws:features>
+							<bean class="org.apache.cxf.transport.jms.JMSConfigFeature"
+								p:jmsConfig-ref="jmsConfig" />
+						</jaxws:features>
+					</jaxws:endpoint>
+					<!-- jms配置特征 -->
+					<bean id="jmsConfig" class="org.apache.cxf.transport.jms.JMSConfiguration"
+						p:connectionFactory-ref="jmsConnectionFactory" 
+						p:targetDestination="test.cxf.jmstransport.queue" />
+					<!-- 配置jms连接工厂 -->
+					<bean id="jmsConnectionFactory" class="org.apache.activemq.ActiveMQConnectionFactory">
+						
+						<!-- 指定代理的url地址 -->
+						<property name="brokerURL" value="tcp://localhost:61616" />
+					</bean>
+				</beans>
+				
+				client-beans.xml
+		4. Creating a client component to consume the service
+		   producer(消息生产者, 客户端)
+		   
+		    /**
+				 * 消息发送方,消息生产者
+				 */
+				public class Sender {
+				
+					public static void main(String[] args) {
+						ApplicationContext ac = new ClassPathXmlApplicationContext(
+								"client-beans.xml", Sender.class);
+						OrderService os = (OrderService) ac.getBean("orderServiceClient");
+						Order order = os.getOrder("N009");
+						System.out.println(order);
+					}
+				}
+		   ----------------------------------------------
+		    consumer(消息消费者, 服务端)
+		   
+		    /**
+				 * 消息的消费者, 处理消息 
+				 */
+				public class Consumer {
+					public static void main(String[] args) {
+						new ClassPathXmlApplicationContext("server-beans.xml", Consumer.class);
+					}
+				}
+		   
+		5. Performing build and deployment
+		    a: 先启动中间件MessageBroker
+		    b: 消息消费者 (Consumer)
+		    c: 消息的生产者 (producer)
+		 
+jvm内部实现消息的传递
+    1. 创建SEI和实现类
+    2. 创建服务器
+    	/**
+			 * 服务器 
+			 */
+			public class Server {
+				public static void main(String[] args) {
+					OrderService os = new OrderServiceImpl();
+					//在本地发布一个ws(jvm内部发布)
+					Endpoint.publish("local://OrderService", os);
+				}
+			}
+    3. 创建客户端配置
+    	<beans xmlns="http://www.springframework.org/schema/beans"
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:jaxws="http://cxf.apache.org/jaxws"
+				xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+			               http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
+				<jaxws:client id="orderServiceClient" serviceClass="com.erjiao.cxf.transpot.jvm.OrderService"
+					address="local://OrderService" />
+			</beans>
+    4. 开发一个客户端
+   
+开发自定义拦截器
+    1. Developing the server side interceptor
+    	public class MyServerInterceptor extends AbstractSoapInterceptor{
+				public MyServerInterceptor() {
+					super(Phase.PRE_INVOKE);
+				}
+				
+				@Override
+				public void handleMessage(SoapMessage arg0) throws Fault {
+					System.out.println("MyServerInterceptor.handleMessage...");
+				}
+			}
+		2. Adding the server side interceptor to the order process service
+				@WebService
+				@InInterceptors(interceptors={"org.apache.cxf.interceptor.LoggingInInterceptor", 
+						"com.erjiao.cxf.interceptor.MyServerInterceptor"})
+				public interface OrderService {
+					@WebMethod
+					public Order getOrder(String orderNo);
+				}
+		3. Developing the client side interceptor
+		4. Adding a client side interceptor to the client code
+				ApplicationContext ac = new ClassPathXmlApplicationContext(
+											"client-beans.xml", Client.class);
+				OrderService os = (OrderService) ac.getBean("orderServiceClient");
+				//创建客户端拦截器对象
+				MyClientInterceptor clientInterceptor = new MyClientInterceptor();
+				//通过客户端代理类创建客户端的包装对象
+				org.apache.cxf.endpoint.Client cxfClient = ClientProxy.getClient(os);
+				//得到客户端出拦截器集合, 并添加拦截器对象
+				cxfClient.getOutInterceptors().add(clientInterceptor);
+				
+				//调用os方法
+				Order order = os.getOrder("No99090");
+		5. Developing the standalone server for publishing the order process web service
+				public static void main(String[] args) {
+					OrderService os = new OrderServiceImpl();
+					//jaxws 服务器工厂bean
+					JaxWsServerFactoryBean server = new JaxWsServerFactoryBean();
+					//设置服务器bean
+					server.setServiceBean(os);
+					//设置发布地址
+					server.setAddress("http://localhost:8080/OrderService");
+					//创建服务器(直接启动)
+					server.create();
+					System.out.println("Server ready....");
+				}
+				
+应用Gzipfeature 给ws
+	1. Developing service SEI and implementation class
+	2. Developing a server component
+			public static void main(String[] args) {
+				OrderService os = new OrderServiceImpl();
+				//实例化GZipFeature 对象
+				GZIPFeature gzip = new GZIPFeature();
+				//阀门
+				gzip.setThreshold(1);
+				JaxWsServerFactoryBean server = new JaxWsServerFactoryBean();
+				server.setServiceBean(os);
+				server.setAddress("http://localhost:8080/feature/OrderServcie");
+				//给服务器添加feature
+				server.getFeatures().add(gzip);
+				server.create();
+				System.out.println("Server ready....");
+			}
+	3. Creating a client bean configuration file
+			<?xml version="1.0" encoding="UTF-8" ?>
+			<beans xmlns="http://www.springframework.org/schema/beans"
+				xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:http-conf="http://cxf.apache.org/transports/http/configuration"
+				xmlns:jaxws="http://cxf.apache.org/jaxws"
+				xsi:schemaLocation="http://www.springframework.org/schema/beans 
+			               http://www.springframework.org/schema/beans/spring-beans.xsd 
+			               http://cxf.apache.org/transports/http/configuration 
+			               http://cxf.apache.org/schemas/configuration/http-conf.xsd 
+			               http://cxf.apache.org/jaxws http://cxf.apache.org/schemas/jaxws.xsd">
+				<http-conf:conduit name="*.http-conduit">
+					<!-- 配置http 接收压缩的数据, 然后进行解压处理 -->
+					<http-conf:client AcceptEncoding="gzip" />
+				</http-conf:conduit>
+				<jaxws:client id="orderServiceClient" serviceClass="com.erjiao.cxf.feature.OrderService"
+					address="http://localhost:8080/feature/OrderServcie">
+					<jaxws:features>
+						<bean class="org.apache.cxf.transport.common.gzip.GZIPFeature">
+							<property name="threshold" value="1" />
+						</bean>
+					</jaxws:features>
+				</jaxws:client>
+			</beans>
+	4. Creating a client component to consume the service
+			
+	5. Building and executing the code
+	
